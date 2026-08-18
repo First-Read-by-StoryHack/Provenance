@@ -17,6 +17,9 @@
         "fingerprintRule": "SHA-256 of the text with CRLF normalised to LF, trailing spaces and tabs stripped per line, then trimmed.",
         "signature": "Ed25519 over the UTF-8 bytes of the JSON array above, base64-encoded."
     },
-    "mirrors": [],
-    "independence": "NOT YET MIRRORED. This manifest is served only by First Read, so verification currently depends on this service remaining available. Do not describe it as independent until the mirrors listed in PROVENANCE_KEY_MIRRORS exist."
+    "mirrors": [
+        "https://raw.githubusercontent.com/First-Read-by-StoryHack/provenance/main/manifest.json",
+        "dns:_provenance.storyhack.io"
+    ],
+    "independence": "This manifest is mirrored outside First Read infrastructure. Verification does not depend on us."
 }
