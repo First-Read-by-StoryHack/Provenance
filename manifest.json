@@ -1,0 +1,22 @@
+{
+    "keys": [
+        {
+            "fingerprint": "8ad55329db309958",
+            "algorithm": "Ed25519",
+            "format": "spki-pem",
+            "publicKey": "-----BEGIN PUBLIC KEY-----\nMCowBQYDK2VwAyEAb/VzSRgh76GUy/6d2OBYx+F/rSC9uE1cnOSudQ+xyJs=\n-----END PUBLIC KEY-----\n",
+            "validFrom": "2026-08-17T00:00:00.000Z",
+            "validUntil": null
+        }
+    ],
+    "current": "8ad55329db309958",
+    "howToVerify": {
+        "selectKey": "Use the key whose validFrom <= record.savedAt < validUntil (or validUntil null).",
+        "documentPayload": "[version, docId, showId, ownerId, contentFingerprint, profileFingerprint, docType, savedAt]",
+        "profilePayload": "[version, profileId, ownerId, fingerprint, boundAt]",
+        "fingerprintRule": "SHA-256 of the text with CRLF normalised to LF, trailing spaces and tabs stripped per line, then trimmed.",
+        "signature": "Ed25519 over the UTF-8 bytes of the JSON array above, base64-encoded."
+    },
+    "mirrors": [],
+    "independence": "NOT YET MIRRORED. This manifest is served only by First Read, so verification currently depends on this service remaining available. Do not describe it as independent until the mirrors listed in PROVENANCE_KEY_MIRRORS exist."
+}
