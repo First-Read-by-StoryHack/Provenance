@@ -1,5 +1,3 @@
-# Provenance
-First Read provenance key manifest and canonical signature format
 # First Read — provenance key mirror
 
 This repository publishes the public keys First Read uses to sign documents, so that a signature can
@@ -52,19 +50,53 @@ Or implement it yourself. The full specification:
 tabs stripped from each line, then the whole string trimmed. A reformat is therefore not treated as
 tampering; any change to wording, ordering or punctuation is.
 
-**3. Canonical payload.** A JSON array, in exactly this order:
+**3. Canonical payload — the shape depends on the record's own `version` field.**
+
+Rebuild a record in its own version's shape. Rebuilding an older record in a newer shape makes a
+genuine signature read as forged, which is the failure this section is written to prevent.
+
+Fields are only ever **appended**, so every index an earlier version established stays put:
 
 ```
-[version, docId, showId, ownerId, contentFingerprint, profileFingerprint, docType, savedAt]
+v1  [version, docId, showId, ownerId, contentFingerprint, profileFingerprint, docType, savedAt]
+v2   … the eight above, then [chainIndex, chainElement]
+v3   … the ten above,  then [identitySessionId]
 ```
 
-For voice-profile records rather than documents:
+`chainIndex`/`chainElement` are the record's position in the tamper-evident attestation chain.
+`identitySessionId` names the identity check, so the record can be matched against the revocation
+list below; it is `null` for writers who never verified.
+
+**If you meet a version higher than 3, stop.** Treat it as UNSUPPORTED rather than invalid, and
+fetch a newer copy of `verify-example.mjs`. A record is not forged merely because this file is old.
+
+For voice-profile records rather than documents. Note that **v2 is not a pure append** — it inserts
+before `boundAt`, so rebuild strictly by version:
 
 ```
-[version, profileId, ownerId, fingerprint, boundAt]
+v1  [version, profileId, ownerId, fingerprint, boundAt]
+v2  [version, profileId, ownerId, fingerprint, sourceFingerprint, sourceTurns, boundAt]
 ```
 
-**4. Verify.** Ed25519 over the UTF-8 bytes of that JSON array. The `signature` field is base64.
+**4. Timestamps.** `savedAt` is signed as ISO-8601 with a trailing `Z` and millisecond precision
+(`2026-08-19T21:17:30.441Z`). A database-native `+00:00` rendering is the same instant but
+**different bytes**, and a signature covers bytes. Normalise before rebuilding.
+
+**5. Verify.** Ed25519 over the UTF-8 bytes of that JSON array. The `signature` field is base64.
+
+### Field names in the export file
+
+The export a writer downloads spells two fields differently from this specification. Both spellings
+mean the same thing and `verify-example.mjs` accepts either:
+
+| Export file    | This spec |
+| -------------- | --------- |
+| `documentId`   | `docId`   |
+| `documentType` | `docType` |
+
+The export is an object with a `records` array. **Pass one element of that array**, not the whole
+file. If a required field is missing, `verify-example.mjs` exits with status 2 and says which —
+it will not build a payload out of nulls and report a sound record as invalid.
 
 ## What a valid signature proves, and what it does not
 
@@ -83,3 +115,61 @@ would rather say so here than be quoted saying otherwise.
 Document signing began **2026-08-18**. Documents saved before that date carry no signature. Their
 absence is not evidence of anything.
 
+---
+
+## Revoked identity verifications
+
+A signature is permanent. An identity check is not.
+
+If a record states KYC identity strength, the government-ID verification behind it can have been
+withdrawn since — a stolen document, synthetic media, a court-ordered erasure. **Revocation never
+alters a signed record and never invalidates the content fingerprint or the timestamp.** What
+changes is that the identity claim attached to that record can no longer be relied upon. It does
+not mean the document is forged, and it does not mean the writer acted in bad faith.
+
+The list of revoked verifications is published, signed with the same key as the records:
+
+```
+https://www.storyhack.io/api/provenance/revocations
+```
+
+### Checking it without trusting us
+
+The list is signed, which stops a third party forging entries. It does **not** stop us serving a
+genuine but older list that quietly omits a revocation. A signature over the entries that are
+present says nothing about the ones that are missing.
+
+So the entry set is pinned at the domain registrar, which we cannot vary per requester:
+
+```
+dig +short TXT _revocations.storyhack.io
+v=frrev1; serial=<count>.<hash>; entries=<sha256>
+```
+
+To check a list you were served:
+
+1. Take its `entries` array, sort by `providerSessionId`, and map each to the triple
+   `[providerSessionId, reason, revokedAt]`.
+2. SHA-256 the JSON of that sorted array.
+3. Compare against `entries=` in the TXT record. **A mismatch means the list you hold is not the
+   list we published.**
+
+The TXT record deliberately carries **no timestamp**, so it is stable between revocations and a
+mismatch always means something. A `serial` lower than one you have seen before is a rollback, not
+an update.
+
+### Two things that are NOT the same
+
+- **An expired list is not an empty list.** Every list carries `nextUpdateBy`. Past that moment,
+  treat it as UNKNOWN — not as evidence that nothing is revoked. An unavailable list is exactly
+  what withholding looks like.
+- **An empty list is a positive assertion.** A signed, dated list with no entries says: on this
+  date, we state there are none. That is checkable. Silence is not, which is why this endpoint
+  returns 503 rather than an empty list when it cannot read its own data.
+
+### What this file cannot tell you
+
+`verify-example.mjs` takes the revocation list as an optional third argument and will not print an
+unqualified VERIFIED for a record claiming KYC identity that it could not clear. Records signed
+before payload version 3 name no identity session, so they cannot be matched against the list at
+all; for those it reports UNKNOWN rather than implying a check it did not perform.

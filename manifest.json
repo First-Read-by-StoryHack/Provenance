@@ -12,8 +12,8 @@
     "current": "8ad55329db309958",
     "howToVerify": {
         "selectKey": "Use the key whose validFrom <= record.savedAt < validUntil (or validUntil null).",
-        "documentPayload": "[version, docId, showId, ownerId, contentFingerprint, profileFingerprint, docType, savedAt]",
-        "profilePayload": "[version, profileId, ownerId, fingerprint, boundAt]",
+        "documentPayload": "The shape depends on the record's version field, and older records MUST be rebuilt in their original shape or genuine signatures read as forged. v1: [version, docId, showId, ownerId, contentFingerprint, profileFingerprint, docType, savedAt]. v2 appends [chainIndex, chainElement]. v3 appends [identitySessionId]. Fields are only ever appended, so every index established by an earlier version is stable.",
+        "profilePayload": "The shape depends on the record's version field, and fields are only ever appended. v1: [version, profileId, ownerId, fingerprint, boundAt]. v2 appends [sourceFingerprint, sourceTurns] BEFORE boundAt, giving [version, profileId, ownerId, fingerprint, sourceFingerprint, sourceTurns, boundAt] \u2014 note that v2 is NOT a pure append, so rebuild strictly by version. sourceFingerprint is a SHA-256 over the writer's own interview turns joined by a NUL delimiter, or null when none were recorded; sourceTurns is the count.",
         "fingerprintRule": "SHA-256 of the text with CRLF normalised to LF, trailing spaces and tabs stripped per line, then trimmed.",
         "signature": "Ed25519 over the UTF-8 bytes of the JSON array above, base64-encoded."
     },
