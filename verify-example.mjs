@@ -64,6 +64,9 @@ const binding = {
   chainIndex: pick('chainIndex') ?? null,
   chainElement: pick('chainElement') ?? null,
   identitySessionId: pick('identitySessionId') ?? null,
+  // v4. Genuinely nullable — a document we generated nothing for carries neither.
+  toolOutputFingerprint: pick('toolOutputFingerprint') ?? null,
+  toolOutputMethod: pick('toolOutputMethod') ?? null,
 };
 
 const required = ['version', 'docId', 'showId', 'ownerId', 'contentFingerprint', 'docType',
@@ -95,7 +98,7 @@ const fingerprint = (text) =>
   perfectly sound — the same false-forgery outcome described above, arriving from the future
   instead of from the past. Update this constant in the same commit that adds a field.
 */
-const NEWEST_KNOWN_VERSION = 3;
+const NEWEST_KNOWN_VERSION = 4;
 if (binding.version > NEWEST_KNOWN_VERSION) {
   console.error(`This record is version ${binding.version}; this file only knows up to v${NEWEST_KNOWN_VERSION}.`);
   console.error('UNSUPPORTED — not verified and NOT invalid. Fetch a newer copy of this script from');
@@ -129,6 +132,22 @@ const payload = JSON.stringify([
   ...(binding.version >= 2 ? [binding.chainIndex ?? null, binding.chainElement ?? null] : []),
   // v3 added the identity session, so a KYC record can be matched against the revocation list.
   ...(binding.version >= 3 ? [binding.identitySessionId ?? null] : []),
+  /*
+     v4 added a hash of the text First Read generated for this document, and — separately — an
+     identifier for WHICH DEFINITION of "generated" was used when that hash was taken.
+
+     The method matters to you as a reader. The definition changed once already, eight days after
+     it was first written, when testing it against a real screenplay showed it was counting the
+     tool quoting the writer's own pages back at him. If you recompute an overlap figure with
+     today's definition against a record signed under an older one, you will get a different
+     number, and that difference is NOT evidence of tampering. Read the method identifier, then
+     look up what it meant: storyhack.io publishes each version.
+
+     Neither field is a claim about who wrote anything. See the record's own limits text.
+  */
+  ...(binding.version >= 4
+    ? [binding.toolOutputFingerprint ?? null, binding.toolOutputMethod ?? null]
+    : []),
 ]);
 
 const sigOk = key
