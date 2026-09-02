@@ -1,26 +1,26 @@
 {
-    "keys": [
-        {
-            "fingerprint": "8ad55329db309958",
-            "algorithm": "Ed25519",
-            "format": "spki-pem",
-            "publicKey": "-----BEGIN PUBLIC KEY-----\nMCowBQYDK2VwAyEAb/VzSRgh76GUy/6d2OBYx+F/rSC9uE1cnOSudQ+xyJs=\n-----END PUBLIC KEY-----\n",
-            "validFrom": "2026-08-17T00:00:00.000Z",
-            "validUntil": null
-        }
-    ],
-    "current": "8ad55329db309958",
-    "howToVerify": {
-        "selectKey": "Use the key whose validFrom <= record.savedAt < validUntil (or validUntil null).",
-        "documentPayload": "The shape depends on the record's version field, and older records MUST be rebuilt in their original shape or genuine signatures read as forged. v1: [version, docId, showId, ownerId, contentFingerprint, profileFingerprint, docType, savedAt]. v2 appends [chainIndex, chainElement]. v3 appends [identitySessionId]. v4 appends [toolOutputFingerprint, toolOutputMethod] — a SHA-256, under the same fingerprint rule, over the text First Read generated for this document, and an identifier for WHICH DEFINITION of \"generated\" was used when that hash was taken. Both are null on a document First Read generated nothing for. Fields are only ever appended, so every index established by an earlier version is stable.",
-        "profilePayload": "The shape depends on the record's version field, and fields are only ever appended. v1: [version, profileId, ownerId, fingerprint, boundAt]. v2 appends [sourceFingerprint, sourceTurns] BEFORE boundAt, giving [version, profileId, ownerId, fingerprint, sourceFingerprint, sourceTurns, boundAt] — note that v2 is NOT a pure append, so rebuild strictly by version. sourceFingerprint is a SHA-256 over the writer's own interview turns joined by a NUL delimiter, or null when none were recorded; sourceTurns is the count.",
-        "fingerprintRule": "SHA-256 of the text with CRLF normalised to LF, trailing spaces and tabs stripped per line, then trimmed.",
-        "signature": "Ed25519 over the UTF-8 bytes of the JSON array above, base64-encoded.",
-        "toolOutputMethod": "The definition of tool-output overlap changes over time, so each record names the one it was signed under. Recomputing an overlap figure with a newer definition against an older record gives a different number, and that difference is NOT evidence of tampering — the signature covers the fingerprint and the method identifier, not the percentage. v1.first-appearance (shipped 2026-09-01): a passage counts as First Read’s only if its FIRST appearance anywhere in the project record was in text First Read generated. A passage the writer supplied first does not count as First Read’s even if its output later reproduced it. Passages are eight consecutive words, compared after normalising case, punctuation and whitespace. Definitions are published at storyhack.io and are never edited after records are signed under them."
-    },
-    "mirrors": [
-        "https://raw.githubusercontent.com/First-Read-by-StoryHack/provenance/main/manifest.json",
-        "dns:_provenance.storyhack.io"
-    ],
-    "independence": "This manifest is mirrored outside First Read infrastructure. Verification does not depend on us."
+  "keys": [
+    {
+      "fingerprint": "8ad55329db309958",
+      "algorithm": "Ed25519",
+      "format": "spki-pem",
+      "publicKey": "-----BEGIN PUBLIC KEY-----\nMCowBQYDK2VwAyEAb/VzSRgh76GUy/6d2OBYx+F/rSC9uE1cnOSudQ+xyJs=\n-----END PUBLIC KEY-----\n",
+      "validFrom": "2026-08-17T00:00:00.000Z",
+      "validUntil": null
+    }
+  ],
+  "current": "8ad55329db309958",
+  "howToVerify": {
+    "selectKey": "Use the key whose validFrom <= record.savedAt < validUntil (or validUntil null).",
+    "documentPayload": "The shape depends on the record's version field, and older records MUST be rebuilt in their original shape or genuine signatures read as forged. v1: [version, docId, showId, ownerId, contentFingerprint, profileFingerprint, docType, savedAt]. v2 appends [chainIndex, chainElement]. v3 appends [identitySessionId]. v4 appends [toolOutputFingerprint, toolOutputMethod]: a SHA-256, under the same fingerprint rule, over the text First Read generated for this document, and an identifier for WHICH DEFINITION of \"generated\" was used when that hash was taken. Both are null on a record where no tool output was measured. Document payload fields are only ever appended, so every index established by an earlier version is stable. This is true of the DOCUMENT payload and is NOT true of the profile payload below.",
+    "profilePayload": "The shape depends on the record's version field. Profile payloads are NOT append-only; rebuild strictly by version. v1: [version, profileId, ownerId, fingerprint, boundAt]. v2 appends [sourceFingerprint, sourceTurns] BEFORE boundAt, giving [version, profileId, ownerId, fingerprint, sourceFingerprint, sourceTurns, boundAt]. v2 is NOT a pure append, so rebuild strictly by version. sourceFingerprint is a SHA-256 over the writer's own interview turns joined by a NUL delimiter, or null when none were recorded; sourceTurns is the count.",
+    "fingerprintRule": "SHA-256 of the text with CRLF normalised to LF, trailing spaces and tabs stripped per line, then trimmed.",
+    "signature": "Ed25519 over the UTF-8 bytes of the JSON array above, base64-encoded.",
+    "toolOutputMethod": "The definition of tool-output overlap changes over time, so each record names the one it was signed under. Recomputing an overlap figure with a newer definition against an older record gives a different number, and that difference is NOT evidence of tampering: the signature covers the fingerprint and the method identifier together. v1.first-appearance attributes each shingle of the signed text to whichever side produced it FIRST in the project timeline, resolving ties to the writer."
+  },
+  "mirrors": [
+    "https://raw.githubusercontent.com/First-Read-by-StoryHack/provenance/main/manifest.json",
+    "dns:_provenance.storyhack.io"
+  ],
+  "independence": "This manifest is mirrored outside First Read infrastructure. Verification does not depend on us."
 }
